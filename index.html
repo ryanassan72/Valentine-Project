@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A Journey of Us ❤️</title>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Quicksand:wght@300;600&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
+    
+    <style>
+        :root {
+            --paper: #f9f4e8;
+            --ink: #432818;
+            --accent: #d00000;
+            --wood: #2c1b0e;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background-color: #1a1a1a;
+            color: white;
+            overflow: hidden;
+            height: 100vh;
+            touch-action: none;
+        }
+
+        .screen {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: transform 0.8s cubic-bezier(0.85, 0, 0.15, 1);
+            text-align: center;
+        }
+
+        /* --- STAGE 1: KEYPAD --- */
+        #stage1 { background-color: #121212; z-index: 4; }
+        .keypad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 30px;
+        }
+        .key {
+            width: 70px; height: 70px;
+            background: #222;
+            border: 1px solid #444;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            transition: all 0.2s;
+        }
+        .key:active { background: var(--accent); transform: scale(0.9); }
+        #pass-display {
+            letter-spacing: 8px;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        /* --- STAGE 2: HOT OR COLD --- */
+        #stage2 { background-color: #2d0a0e; z-index: 3; transform: translateY(100%); }
+        #temp-indicator { 
+            font-size: 2rem; 
+            margin-top: 20px; 
+            text-transform: uppercase; 
+            font-weight: 800;
+            text-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+        #hidden-heart {
+            position: absolute;
+            cursor: pointer;
+            font-size: 3rem;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        /* --- STAGE 3: SCRAPBOOK --- */
+        #stage3 { 
+            background: #d4c4a8 url('https://www.transparenttextures.com/patterns/wood-pattern.png'); 
+            z-index: 2; 
+            transform: translateY(100%); 
+            color: var(--ink);
+        }
+
+        /* --- NEW: Floating Instruction --- */
+        #drag-instruction {
+            position: absolute;
+            top: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 50px;
+            font-weight: 600;
+            z-index: 200;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+            animation: bounce 2s infinite;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+            40% {transform: translateY(-10px);}
+            60% {transform: translateY(-5px);}
+        }
+
+        .scrapbook-item {
+            position: absolute;
+            background: #fff;
+            box-shadow: 5px 15px 30px rgba(0,0,0,0.3);
+            cursor: grab;
+            user-select: none;
+            touch-action: none;
+        }
+
+        .polaroid { 
+            width: 220px; 
+            padding: 12px 12px 40px 12px; 
+            border: 1px solid #ddd;
+        }
+        .polaroid img { width: 100%; height: auto; pointer-events: none; }
+        .polaroid p { font-family: 'Dancing Script', cursive; font-size: 1.4rem; margin-top: 15px; color: #333; }
+
+        .sticky-note {
+            width: 200px;
+            height: 200px;
+            background: #fffd91 !important;
+            padding: 25px !important;
+            font-family: 'Dancing Script', cursive;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 2px 8px 15px rgba(0,0,0,0.15);
+        }
+
+        .flower {
+            background: transparent !important;
+            box-shadow: none !important;
+            width: 120px;
+        }
+        .flower img { width: 100%; height: auto; pointer-events: none; }
+
+        .final-letter {
+            width: 85%;
+            max-width: 500px;
+            padding: 40px;
+            background: #fffef0;
+            border-radius: 2px;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.2);
+            position: relative;
+            opacity: 0;
+            transform: scale(0.9);
+            transition: all 1.5s ease;
+            pointer-events: none;
+            border-left: 6px solid var(--accent);
+        }
+
+        .final-letter h1 { font-family: 'Dancing Script', cursive; font-size: 3rem; color: var(--accent); margin-bottom: 20px; }
+        .final-letter p { line-height: 1.6; font-size: 1.1rem; }
+
+        button.yes-btn {
+            margin-top: 30px;
+            padding: 15px 40px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            font-family: 'Quicksand';
+            font-size: 1rem;
+            box-shadow: 0 4px 10px rgba(208,0,0,0.3);
+        }
+
+        /* --- STAGE 4: CLOSING PAGE --- */
+        #stage4 { 
+            background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('https://images.unsplash.com/photo-1518199266791-5375a83190b7?auto=format&fit=crop&w=1500'); 
+            background-size: cover;
+            background-position: center;
+            z-index: 1; 
+            transform: translateY(100%); 
+        }
+
+        .forever-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            padding: 50px 30px;
+            border-radius: 30px;
+            border: 1px solid rgba(255,255,255,0.2);
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+        }
+
+        .forever-card h1 { 
+            font-family: 'Dancing Script', cursive; 
+            font-size: 4rem; 
+            margin-bottom: 20px;
+            color: white; 
+        }
+
+        .forever-card p {
+            font-size: 1.2rem;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .hint { font-size: 0.8rem; opacity: 0.5; margin-top: 40px; }
+    </style>
+</head>
+<body>
+
+    <div class="screen" id="stage1">
+        <h1 style="font-family: 'Dancing Script'; font-size: 3rem;">Locked for Security</h1>
+        <p>Enter our First Day of dating (DDMMYY) to proceed</p>
+        <div id="pass-display">______</div>
+        <div class="keypad" id="keypad"></div>
+        <p class="hint">Hint: It's 6 digits long</p>
+    </div>
+
+    <div class="screen" id="stage2">
+        <h1 style="font-family: 'Dancing Script'; font-size: 3.5rem;">One more thing...</h1>
+        <p>Find the hidden heart on the screen</p>
+        <div id="temp-indicator">FREEZING...</div>
+        <div id="hidden-heart">❤️</div>
+    </div>
+
+    <div class="screen" id="stage3">
+        <div id="drag-instruction">✨ Move the pictures to find my message...</div>
+
+        <div class="final-letter" id="letter">
+            <h1>Dear Emily,</h1>
+            <p>You've unlocked my heart and explored our memories. There's no one else I'd rather have by my side for the next adventure.</p>
+            <p style="font-weight: bold; margin-top: 15px;">Will you be my Valentine?</p>
+            <button class="yes-btn" onclick="celebrate()">YES, FOREVER! ❤️</button>
+        </div>
+
+        <div class="scrapbook-item polaroid" style="top: 10%; left: 10%;">
+            <img src="pic2.jpg" alt="Memory">
+            <p>Our First Date</p>
+        </div>
+
+        <div class="scrapbook-item sticky-note" style="top: 55%; left: 5%;">
+            "I love how you make even the smallest moments feel like a dream."
+        </div>
+
+        <div class="scrapbook-item polaroid" style="top: 15%; right: 10%;">
+            <img src="pic1.jpg" alt="Memory">
+            <p>The Best Day Out 🌅</p>
+        </div>
+
+        <div class="scrapbook-item polaroid" style="top: 45%; right: 15%;">
+            <img src="pic4.jpg" alt="Memory">
+        </div>
+
+        <div class="scrapbook-item polaroid" style="bottom: 10%; left: 15%;">
+            <img src="pic3.jpg" alt="Memory">
+            <p>Bubble Tea & Us ☕</p>
+        </div>
+
+        <div class="scrapbook-item polaroid" style="bottom: 10%; right: 5%;">
+            <img src="pic5.jpg" alt="Memory">
+            <p>You are my favorite person to annoy for the rest of my life</p>
+        </div>
+
+        <div class="scrapbook-item polaroid" style="top: 45%; right: 15%;">
+            <p>Kissy</p>
+            <img src="pic6.jpg" alt="Memory">
+        </div>
+    </div>
+
+    <div class="screen" id="stage4">
+        <div class="forever-card">
+            <h1>It's a Date!</h1>
+            <p>I can't wait to spend the rest of our days making more memories together.</p>
+            <p style="font-family: 'Dancing Script'; font-size: 2.5rem; margin-top: 20px;">I Love You! ❤️</p>
+        </div>
+        <p style="position: absolute; bottom: 30px; font-size: 0.8rem; opacity: 0.6;">(You can now close this tab, but I'll never close my heart to you.)</p>
+    </div>
+
+    <script>
+        // --- CONFIGURATION ---
+        const CORRECT_PIN = "260322"; 
+        let currentInput = "";
+        let zIndexCounter = 100;
+        let itemsMoved = 0;
+
+        // --- STAGE 1: KEYPAD ---
+        const keypad = document.getElementById('keypad');
+        const display = document.getElementById('pass-display');
+
+        for (let i = 1; i <= 9; i++) createKey(i);
+        createKey(0); 
+
+        function createKey(num) {
+            const btn = document.createElement('div');
+            btn.className = 'key';
+            btn.innerText = num;
+            btn.onclick = () => {
+                if (currentInput.length < 6) {
+                    currentInput += num;
+                    display.innerText = currentInput.padEnd(6, '_');
+                    if (currentInput === CORRECT_PIN) {
+                        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+                        setTimeout(() => nextStage(1), 600);
+                    } else if (currentInput.length === 6) {
+                        currentInput = "";
+                        display.style.color = "red";
+                        setTimeout(() => { display.innerText = "______"; display.style.color = "var(--accent)"; }, 600);
+                    }
+                }
+            };
+            keypad.appendChild(btn);
+        }
+
+        // --- STAGE 2: HOT OR COLD ---
+        const heart = document.getElementById('hidden-heart');
+        const temp = document.getElementById('temp-indicator');
+        const s2 = document.getElementById('stage2');
+
+        heart.style.left = (Math.random() * 70 + 15) + "%";
+        heart.style.top = (Math.random() * 70 + 15) + "%";
+
+        const updateTemp = (clientX, clientY) => {
+            const rect = heart.getBoundingClientRect();
+            const heartX = rect.left + rect.width / 2;
+            const heartY = rect.top + rect.height / 2;
+            const dist = Math.sqrt(Math.pow(clientX - heartX, 2) + Math.pow(clientY - heartY, 2));
+
+            if (dist < 60) {
+                temp.innerText = "BURNING!";
+                temp.style.color = "#ff0000";
+                heart.style.opacity = "1";
+            } else if (dist < 150) {
+                temp.innerText = "VERY HOT";
+                temp.style.color = "#ff4d6d";
+                heart.style.opacity = "0.3";
+            } else if (dist < 300) {
+                temp.innerText = "WARM";
+                temp.style.color = "#ff8fa3";
+                heart.style.opacity = "0";
+            } else {
+                temp.innerText = "FREEZING...";
+                temp.style.color = "#00b4d8";
+                heart.style.opacity = "0";
+            }
+        };
+
+        s2.addEventListener('mousemove', (e) => updateTemp(e.clientX, e.clientY));
+        s2.addEventListener('touchmove', (e) => updateTemp(e.touches[0].clientX, e.touches[0].clientY));
+
+        heart.onclick = () => nextStage(2);
+
+        // --- STAGE 3: SCRAPBOOK ---
+        const totalItems = document.querySelectorAll('.scrapbook-item').length;
+        const dragInstr = document.getElementById('drag-instruction');
+
+        interact('.scrapbook-item').draggable({
+            listeners: {
+                start(event) {
+                    zIndexCounter++;
+                    event.target.style.zIndex = zIndexCounter;
+                    
+                    // --- NEW: Hide instruction on first drag ---
+                    if (dragInstr) {
+                        dragInstr.style.opacity = "0";
+                    }
+                },
+                move(event) {
+                    const target = event.target;
+                    const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
+                    const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+                    target.style.transform = `translate(${x}px, ${y}px)`;
+                    target.setAttribute('data-x', x);
+                    target.setAttribute('data-y', y);
+
+                    if (!target.classList.contains('moved')) {
+                        target.classList.add('moved');
+                        itemsMoved++;
+                        revealLetter();
+                    }
+                }
+            }
+        });
+
+        function revealLetter() {
+            const letter = document.getElementById('letter');
+            const progress = itemsMoved / totalItems;
+            letter.style.opacity = progress;
+            if (progress >= 0.6) {
+                letter.style.transform = "scale(1)";
+                letter.style.pointerEvents = "auto";
+            }
+        }
+
+        document.querySelectorAll('.scrapbook-item').forEach(item => {
+            const rot = Math.floor(Math.random() * 20) - 10;
+            item.style.transform = `rotate(${rot}deg)`;
+        });
+
+        // --- NAVIGATION ---
+        function nextStage(n) {
+            document.getElementById(`stage${n}`).style.transform = "translateY(-100%)";
+            document.getElementById(`stage${n+1}`).style.transform = "translateY(0)";
+        }
+
+        // --- FINAL CELEBRATION & REDIRECT ---
+        function celebrate() {
+            confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+            
+            setTimeout(() => {
+                nextStage(3);
+                
+                const end = Date.now() + (10 * 60 * 1000); 
+                const colors = ['#ff4d6d', '#ffffff', '#ff8fa3', '#d00000'];
+
+                (function frame() {
+                    confetti({
+                        particleCount: 2,
+                        angle: 60,
+                        spread: 55,
+                        origin: { x: 0 },
+                        colors: colors
+                    });
+                    confetti({
+                        particleCount: 2,
+                        angle: 120,
+                        spread: 55,
+                        origin: { x: 1 },
+                        colors: colors
+                    });
+
+                    if (Date.now() < end) {
+                        requestAnimationFrame(frame);
+                    }
+                }());
+            }, 800);
+        }
+    </script>
+</body>
+</html>
