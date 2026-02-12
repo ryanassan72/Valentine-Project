@@ -41,7 +41,7 @@
         }
 
         /* --- STAGE 1: KEYPAD --- */
-        #stage1 { background-color: #121212; z-index: 4; }
+        #stage1 { background-color: #121212; z-index: 5; }
         .keypad {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -70,7 +70,7 @@
         }
 
         /* --- STAGE 2: HOT OR COLD --- */
-        #stage2 { background-color: #2d0a0e; z-index: 3; transform: translateY(100%); }
+        #stage2 { background-color: #2d0a0e; z-index: 4; transform: translateY(100%); }
         #temp-indicator { 
             font-size: 2rem; 
             margin-top: 20px; 
@@ -86,15 +86,51 @@
             transition: opacity 0.3s;
         }
 
-        /* --- STAGE 3: SCRAPBOOK --- */
-        #stage3 { 
+        /* --- NEW STAGE 3: JAR OF REASONS --- */
+        #stage3 { background-color: #1a1a1a; z-index: 3; transform: translateY(100%); }
+        .jar-container {
+            cursor: pointer;
+            position: relative;
+            width: 200px;
+            height: 250px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 4px solid #fff;
+            border-radius: 20px 20px 50px 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .jar-container::after {
+            content: ''; position: absolute; top: -10px; width: 100px; height: 12px; background: #8b5e3c; border-radius: 4px;
+        }
+        #reason-display {
+            margin-top: 25px;
+            font-family: 'Dancing Script';
+            font-size: 1.8rem;
+            color: #ff8fa3;
+            max-width: 80%;
+            min-height: 2.5rem;
+        }
+        .jar-btn {
+            margin-top: 25px;
+            padding: 10px 25px;
+            background: white;
+            color: black;
+            border-radius: 20px;
+            border: none;
+            font-weight: bold;
+            display: none;
+            cursor: pointer;
+        }
+
+        /* --- STAGE 4: SCRAPBOOK --- */
+        #stage4 { 
             background: #d4c4a8 url('https://www.transparenttextures.com/patterns/wood-pattern.png'); 
             z-index: 2; 
             transform: translateY(100%); 
             color: var(--ink);
         }
 
-        /* --- NEW: Floating Instruction --- */
         #drag-instruction {
             position: absolute;
             top: 20px;
@@ -185,8 +221,8 @@
             box-shadow: 0 4px 10px rgba(208,0,0,0.3);
         }
 
-        /* --- STAGE 4: CLOSING PAGE --- */
-        #stage4 { 
+        /* --- STAGE 5: CLOSING PAGE --- */
+        #stage5 { 
             background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('https://images.unsplash.com/photo-1518199266791-5375a83190b7?auto=format&fit=crop&w=1500'); 
             background-size: cover;
             background-position: center;
@@ -240,6 +276,16 @@
     </div>
 
     <div class="screen" id="stage3">
+        <h1 style="font-family: 'Dancing Script'; font-size: 3rem; margin-bottom: 20px;">Jar of Reasons</h1>
+        <p style="margin-bottom: 30px; opacity: 0.8;">Tap the jar to find out why I love you...</p>
+        <div class="jar-container" onclick="pullReason()">
+            <div style="font-size: 3rem;">💖</div>
+        </div>
+        <div id="reason-display"></div>
+        <button id="proceed-btn" class="jar-btn" onclick="nextStage(3)">Continue to Memories ✨</button>
+    </div>
+
+    <div class="screen" id="stage4">
         <div id="drag-instruction">✨ Move the pictures to find my message...</div>
 
         <div class="final-letter" id="letter">
@@ -283,7 +329,7 @@
         </div>
     </div>
 
-    <div class="screen" id="stage4">
+    <div class="screen" id="stage5">
         <div class="forever-card">
             <h1>It's a Date!</h1>
             <p>I can't wait to spend the rest of our days making more memories together.</p>
@@ -365,7 +411,28 @@
 
         heart.onclick = () => nextStage(2);
 
-        // --- STAGE 3: SCRAPBOOK ---
+        // --- NEW STAGE 3: JAR OF REASONS LOGIC ---
+        const reasons = [
+            "Your beautiful smile",
+            "How you make me feel safe",
+            "Your endless kindness",
+            "The way you look at me",
+            "Our late night talks",
+            "You are my best friend"
+        ];
+        let reasonIdx = 0;
+        function pullReason() {
+            const display = document.getElementById('reason-display');
+            display.innerText = reasons[reasonIdx];
+            confetti({ particleCount: 20, spread: 50, origin: { y: 0.7 }, colors: ['#ff8fa3', '#ffffff'] });
+            reasonIdx++;
+            if (reasonIdx >= reasons.length) {
+                document.getElementById('proceed-btn').style.display = "inline-block";
+                reasonIdx = 0;
+            }
+        }
+
+        // --- STAGE 4: SCRAPBOOK ---
         const totalItems = document.querySelectorAll('.scrapbook-item').length;
         const dragInstr = document.getElementById('drag-instruction');
 
@@ -374,8 +441,6 @@
                 start(event) {
                     zIndexCounter++;
                     event.target.style.zIndex = zIndexCounter;
-                    
-                    // --- NEW: Hide instruction on first drag ---
                     if (dragInstr) {
                         dragInstr.style.opacity = "0";
                     }
@@ -423,7 +488,7 @@
             confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
             
             setTimeout(() => {
-                nextStage(3);
+                nextStage(4);
                 
                 const end = Date.now() + (10 * 60 * 1000); 
                 const colors = ['#ff4d6d', '#ffffff', '#ff8fa3', '#d00000'];
